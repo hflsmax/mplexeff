@@ -17,13 +17,14 @@ set(mp_version "0.6")
 set(mprompt_sources  src/mprompt/main.c)
     # util.c gstack_pool.c gstack_win.c gstack_mmap.c gstack_mmap_mach.c gstack.c mprompt.c
 
-set(mpeff_sources    src/mpeff/main.c)
-    # src/mpeff/mpeff.c
+set(mpeff_sources    src/mpeff/main.c
+    src/mpeff/mpeff.c)
 
 set(test_mpe_main_sources
     test/common_util.c
     test/common_effects.c
     test/src/reader.c
+    test/src/multi_invo.c
     test/src/counter.c
     test/src/countern.c
     test/src/mstate.c

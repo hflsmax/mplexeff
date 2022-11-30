@@ -12,6 +12,30 @@
 -----------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------
+  Multi Invo
+-----------------------------------------------------------------*/
+MPE_DEFINE_EFFECT1(multi_invo, ask)
+MPE_DEFINE_OP0(multi_invo, ask, long)
+
+// Tail optimized multi_invo 
+static void* handle_multi_invo_ask(mpe_resume_t* r, void* local, void* arg) {
+  UNUSED(arg);
+  mpt_printf("multi_invo enter 1\n");
+  long i = mpe_long_voidp(mpe_resume_final(r, local, local));
+  mpt_printf("multi_invo enter 2   : %ld\n", mpe_long_voidp(i));
+  return mpe_voidp_long(i+1);
+}
+ 
+void* multi_invo_handle(mpe_actionfun_t action, long init, void* arg) {
+  static const mpe_handlerdef_t multi_invo_hdef = { MPE_EFFECT(multi_invo), NULL, {
+    { MPE_OP_ONCE, MPE_OPTAG(multi_invo,ask), &handle_multi_invo_ask },
+    { MPE_OP_NULL, mpe_op_null, NULL }
+  } };
+  return mpe_handle(&multi_invo_hdef, mpe_voidp_long(init), action, arg);
+}
+
+
+/*-----------------------------------------------------------------
   Reader
 -----------------------------------------------------------------*/
 MPE_DEFINE_EFFECT1(reader, ask)

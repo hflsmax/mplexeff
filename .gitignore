@@ -36,6 +36,8 @@ ide/vs20??/*.db
 ide/vs20??/*.opendb
 ide/vs20??/*.user
 ide/vs20??/.vs
+.vscode/
 
 # Output folder
 out/
+build/

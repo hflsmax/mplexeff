@@ -23,16 +23,16 @@ set(mpeff_sources    src/mpeff/main.c
 set(test_mpe_main_sources
     test/common_util.c
     test/common_effects.c
-    test/src/reader.c
-    test/src/multi_invo.c
-    test/src/counter.c
-    test/src/countern.c
-    test/src/mstate.c
-    test/src/amb.c
-    test/src/amb_state.c
+    # test/src/reader.c
+    # test/src/multi_invo.c
+    # test/src/counter.c
+    # test/src/countern.c
+    # test/src/mstate.c
+    # test/src/amb.c
+    # test/src/amb_state.c
     test/src/nqueens.c
-    test/src/rehandle.c
-    test/src/triples.c
+    # test/src/rehandle.c
+    # test/src/triples.c
     test/test_mpe_main.c)    
 
 if (NOT MP_USE_C)

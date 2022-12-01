@@ -23,7 +23,7 @@ set(mpeff_sources    src/mpeff/main.c
 set(test_mpe_main_sources
     test/common_util.c
     test/common_effects.c
-    # test/src/reader.c
+    test/src/reader.c
     # test/src/multi_invo.c
     # test/src/counter.c
     # test/src/countern.c

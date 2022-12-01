@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
 static void test_c(void) {
   // // effect handlers
-  // reader_run();
+  reader_run();
   // counter_run();
   // countern_run();
   // mstate_run();
@@ -52,7 +52,7 @@ static void test_c(void) {
   // amb_run();
   // amb_state_run();
 
-  nqueens_run();
+  // nqueens_run();
   // triples_run();
 
   // multi_invo_run();

@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <mprompt.h>
 #include "mpeff.h"
 
 
@@ -68,47 +67,6 @@ static inline void mpe_free(void* p) {
 /*-----------------------------------------------------------------
   Types
 -----------------------------------------------------------------*/
-
-
-// A general frame
-typedef struct mpe_frame_s {
-  mpe_effect_t        effect;     // every frame has an effect (to speed up tests)
-  struct mpe_frame_s* parent;
-} mpe_frame_t;
-
-
-// A handler frame
-typedef struct mpe_frame_handle_s {
-  mpe_frame_t             frame;
-  mp_prompt_t*            prompt;
-  const mpe_handlerdef_t* hdef;
-  void*                   local;
-  mpe_frame_t*            resume_top;
-} mpe_frame_handle_t;
-
-
-// An under frame (used for tail-resumptive optimization)
-typedef struct mpe_frame_under_s {
-  mpe_frame_t   frame;    
-  mpe_effect_t  under;    // ignore frames until the innermost `under` effect
-} mpe_frame_under_t;
-
-
-// An mask frame 
-typedef struct mpe_frame_mask_s {
-  mpe_frame_t   frame;
-  mpe_effect_t  mask;    
-  size_t        from;
-} mpe_frame_mask_t;
-
-
-// Finally frame
-typedef struct mpe_frame_finally_s {
-  mpe_frame_t       frame;
-  mpe_releasefun_t* fun;
-  void*             local;
-} mpe_frame_finally_t;
-
 
 // For search efficiency, non-handler frames are identified by a unique effect tag
 MPE_DEFINE_EFFECT0(mpe_frame_under)
@@ -393,9 +351,9 @@ static mpe_frame_handle_t* mpe_find(mpe_optag_t optag) {
   return NULL;
 }
 
-void* mpe_perform(mpe_optag_t optag, void* arg) {
-  mpe_frame_handle_t* h = mpe_find(optag);
-  if (mpe_unlikely(h == NULL)) return mpe_unhandled_operation(optag);
+void* mpe_perform(mpe_frame_handle_t* h, mpe_optag_t optag, void* arg) {
+  // mpe_frame_handle_t* h = mpe_find(optag);
+  // if (mpe_unlikely(h == NULL)) return mpe_unhandled_operation(optag);
   const mpe_operation_t* op = &h->hdef->operations[optag->opidx];
   return mpe_perform_at(h, op, arg);
 }
@@ -430,7 +388,7 @@ static mpe_decl_noinline void* mpe_handle_start(mp_prompt_t* prompt, void* earg)
     // push frame on top
     {mpe_with_frame(&h.frame) {
       // and call the action
-      result = (env->body)(env->arg);
+      result = (env->body)(&h, env->arg);
     }}
     // potentially run return function
     if (h.hdef->resultfun != NULL) {
@@ -544,47 +502,47 @@ void mpe_resume_release(mpe_resume_t* resume) {
   }
 }
 
-/*-----------------------------------------------------------------
-  Mask
------------------------------------------------------------------*/
+// /*-----------------------------------------------------------------
+//   Mask
+// -----------------------------------------------------------------*/
 
-void* mpe_mask(mpe_effect_t eff, size_t from, mpe_actionfun_t* fun, void* arg) {
-  mpe_frame_mask_t f;
-  f.frame.effect = MPE_EFFECT(mpe_frame_mask);
-  f.mask = eff;
-  f.from = from;
-  void* result = NULL;
-  {mpe_with_frame(&f.frame) {
-    result = fun(arg);
-  }}
-  return result;
-}
+// void* mpe_mask(mpe_effect_t eff, size_t from, mpe_actionfun_t* fun, void* arg) {
+//   mpe_frame_mask_t f;
+//   f.frame.effect = MPE_EFFECT(mpe_frame_mask);
+//   f.mask = eff;
+//   f.from = from;
+//   void* result = NULL;
+//   {mpe_with_frame(&f.frame) {
+//     result = fun(arg);
+//   }}
+//   return result;
+// }
 
 
 
-/*-----------------------------------------------------------------
-  Finally
------------------------------------------------------------------*/
+// /*-----------------------------------------------------------------
+//   Finally
+// -----------------------------------------------------------------*/
 
-void* mpe_finally(void* local, mpe_releasefun_t* finally_fun, mpe_actionfun_t* fun, void* arg) {
-  mpe_frame_finally_t f;
-  f.frame.effect = MPE_EFFECT(mpe_frame_finally);
-  f.fun = finally_fun;
-  f.local = local;
-  void* result = NULL;
-  #if MPE_HAS_TRY
-  try {
-  #endif
-    {mpe_with_frame(&f.frame) {
-      result = fun(arg);
-    }}
-    (f.fun)(f.local);
-  #if MPE_HAS_TRY       // not needed in C as there we unwind the frames explicitly
-  }
-  catch (...) {
-    (f.fun)(f.local);   // cannot use raii as fun can throw itself
-    throw;              // re-throw
-  }
-  #endif
-  return result;
-}
+// void* mpe_finally(void* local, mpe_releasefun_t* finally_fun, mpe_actionfun_t* fun, void* arg) {
+//   mpe_frame_finally_t f;
+//   f.frame.effect = MPE_EFFECT(mpe_frame_finally);
+//   f.fun = finally_fun;
+//   f.local = local;
+//   void* result = NULL;
+//   #if MPE_HAS_TRY
+//   try {
+//   #endif
+//     {mpe_with_frame(&f.frame) {
+//       result = fun(arg);
+//     }}
+//     (f.fun)(f.local);
+//   #if MPE_HAS_TRY       // not needed in C as there we unwind the frames explicitly
+//   }
+//   catch (...) {
+//     (f.fun)(f.local);   // cannot use raii as fun can throw itself
+//     throw;              // re-throw
+//   }
+//   #endif
+//   return result;
+// }

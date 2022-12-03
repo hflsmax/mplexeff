@@ -27,9 +27,9 @@ set(test_mpe_main_sources
     # test/src/multi_invo.c
     test/src/counter.c
     test/src/countern.c
-    # test/src/mstate.c
-    # test/src/amb.c
-    # test/src/amb_state.c
+    test/src/mstate.c
+    test/src/amb.c
+    test/src/amb_state.c
     test/src/nqueens.c
     # test/src/rehandle.c
     # test/src/triples.c

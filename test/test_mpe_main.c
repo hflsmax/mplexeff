@@ -43,14 +43,14 @@ int main(int argc, char** argv) {
 static void test_c(void) {
   // // effect handlers
   // reader_run();
-  counter_run();
-  countern_run();
+  // counter_run();
+  // countern_run();
   // mstate_run();
   // rehandle_run();
 
   // // multi-shot tests
   // amb_run();
-  // amb_state_run();
+  amb_state_run();
 
   // nqueens_run();
   // triples_run();

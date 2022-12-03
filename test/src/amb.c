@@ -15,10 +15,10 @@
   Benchmark
 -----------------------------------------------------------------*/
 
-static void* bench_xor(void* arg) {
+static void* bench_xor(mpe_frame_handle_t* h, void* arg) {
   UNUSED(arg);
-  bool x = amb_flip();
-  bool y = amb_flip();
+  bool x = amb_flip(h);
+  bool y = amb_flip(h);
   return mpe_voidp_bool((x && !y) || (!x && y));
 }
 

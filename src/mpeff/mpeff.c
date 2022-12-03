@@ -411,8 +411,24 @@ static mpe_decl_noinline void* mpe_handle_start(mp_prompt_t* prompt, void* earg)
 /// Handle a particular effect.
 /// Handles operations yielded in `body(arg)` with the given handler definition `def`.
 void* mpe_handle(const mpe_handlerdef_t* hdef, void* local, mpe_actionfun_t* body, void* arg) {
-  struct mpe_handle_start_env env = { hdef, local, body, arg };
-  return mp_prompt(&mpe_handle_start, &env);
+  bool need_prompt = false;
+  for (size_t i = 0; i < 8 && hdef->operations[i].opkind != MPE_OP_NULL ; i++) {
+    if (hdef->operations[i].opkind != MPE_OP_TAIL_NOOP) {
+      need_prompt = true;
+      break;
+    }
+  }
+  if (need_prompt) {
+    struct mpe_handle_start_env env = { hdef, local, body, arg };
+    return mp_prompt(&mpe_handle_start, &env);
+  } else {
+      mpe_frame_handle_t h = { { hdef->effect }, NULL, hdef, local };
+      void *result = body(&h, arg);
+      if (h.hdef->resultfun != NULL) {
+        result = h.hdef->resultfun(h.local, result);
+      }
+      return result;
+  }
 }
 
 

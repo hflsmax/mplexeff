@@ -134,7 +134,7 @@ typedef struct mpe_frame_handle_s {
   mp_prompt_t*            prompt;
   const mpe_handlerdef_t* hdef;
   void*                   local;
-  mpe_frame_t*            resume_top;
+  // mpe_frame_t*            resume_top;
 } mpe_frame_handle_t;
 
 // Finally frame

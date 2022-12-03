@@ -25,8 +25,8 @@ set(test_mpe_main_sources
     test/common_effects.c
     test/src/reader.c
     # test/src/multi_invo.c
-    # test/src/counter.c
-    # test/src/countern.c
+    test/src/counter.c
+    test/src/countern.c
     # test/src/mstate.c
     # test/src/amb.c
     # test/src/amb_state.c

@@ -42,9 +42,9 @@ int main(int argc, char** argv) {
 
 static void test_c(void) {
   // // effect handlers
-  reader_run();
-  // counter_run();
-  // countern_run();
+  // reader_run();
+  counter_run();
+  countern_run();
   // mstate_run();
   // rehandle_run();
 

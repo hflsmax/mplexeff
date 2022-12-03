@@ -98,7 +98,7 @@ struct mpe_resume_s {
 -----------------------------------------------------------------*/
 
 // Top of the frames in the current execution stack
-mpe_decl_thread mpe_frame_t* mpe_frame_top;
+// mpe_decl_thread mpe_frame_t* mpe_frame_top;
 
 
 // use as: `{mpe_with_frame(f){ <body> }}`
@@ -122,10 +122,10 @@ public:
 };
 #else
 // C version
-#define mpe_with_frame(f) \
-  for( bool _once = ((f)->parent = mpe_frame_top, mpe_frame_top = (f), true); \
-       _once; \
-       _once = (mpe_frame_top = (f)->parent, false) ) 
+// #define mpe_with_frame(f) \
+//   for( bool _once = ((f)->parent = mpe_frame_top, mpe_frame_top = (f), true); \
+//        _once; \
+//        _once = (mpe_frame_top = (f)->parent, false) ) 
 #endif
 
 
@@ -231,16 +231,16 @@ static void* mpe_perform_op_clause(mp_resume_t* mpr, void* earg) {
 
 // Yield 
 static void* mpe_perform_yield_to(mpe_resumption_kind_t rkind, mpe_frame_handle_t* h, const mpe_operation_t* op, void* arg) {
-  mpe_frame_t* resume_top = mpe_frame_top; // save current top
-  mpe_frame_top = h->frame.parent;           // and unlink handlers
+  // mpe_frame_t* resume_top = mpe_frame_top; // save current top
+  // mpe_frame_top = h->frame.parent;           // and unlink handlers
   mpe_perform_env_t penv = { rkind, op->opfun, h->local, arg };
   // yield up
   mpe_resume_env_t* renv = (mpe_resume_env_t*)mp_yield(h->prompt, &mpe_perform_op_clause, &penv);
   // resumed!                     
   h->local = renv->local;           // set new state
-  mpe_assert_internal(mpe_frame_top != &h->frame);
-  h->frame.parent = mpe_frame_top;  // relink handlers
-  mpe_frame_top = resume_top;
+  // mpe_assert_internal(mpe_frame_top != &h->frame);
+  // h->frame.parent = mpe_frame_top;  // relink handlers
+  // mpe_frame_top = resume_top;
   if (renv->unwind) {
     mpe_unwind_to(h, &mpe_op_unwind, renv->result);
   }
@@ -255,7 +255,7 @@ static void* mpe_perform_op_clause_abort(mp_resume_t* mpr, void* earg) {
 }
 
 static void* mpe_perform_yield_to_abort(mpe_frame_handle_t* h, const mpe_operation_t* op, void* arg) {
-  mpe_frame_top = h->frame.parent;           // unlink handlers
+  // mpe_frame_top = h->frame.parent;           // unlink handlers
   mpe_perform_env_t env = { MPE_RESUMPTION_SCOPED_ONCE /* unused */, op->opfun, h->local, arg };
   return mp_yield(h->prompt, &mpe_perform_op_clause_abort, &env);
 }
@@ -267,10 +267,10 @@ static void* mpe_perform_under(mpe_frame_handle_t* h, const mpe_operation_t* op,
   f.frame.effect = MPE_EFFECT(mpe_frame_under);
   f.under = h->frame.effect;
   void* result = NULL;
-  {mpe_with_frame(&f.frame) {
+  // {mpe_with_frame(&f.frame) {
     mpe_resume_t resume = { MPE_RESUMPTION_INPLACE, { &h->local } };
     result = (op->opfun)(&resume, h->local, arg);
-  }}
+  // }}
   return result;
 }
 
@@ -316,40 +316,40 @@ static mpe_decl_noinline void* mpe_unhandled_operation(mpe_optag_t optag) {
 
 // Perform finds the innermost handler and performs the operation
 // note: this is performance sensitive code
-static mpe_frame_handle_t* mpe_find(mpe_optag_t optag) {
-  mpe_frame_t* f = mpe_frame_top;
-  mpe_effect_t opeff = optag->effect;
-  size_t mask_level = 0;
-  while (mpe_likely(f != NULL)) {
-    mpe_effect_t eff = f->effect;
-    // handle
-    if (mpe_likely(eff == opeff)) {
-      if (mpe_likely(mask_level == 0)) {
-        return (mpe_frame_handle_t*)f;    // found our handler
-      }
-      else {
-        mask_level--;
-      }
-    }
-    // under
-    else if (mpe_unlikely(eff == MPE_EFFECT(mpe_frame_under))) {
-      mpe_effect_t ueff = ((mpe_frame_under_t*)f)->under;
-      do {
-        f = f->parent;
-      } while (f != NULL && f->effect != ueff);
-      if (f == NULL) break;
-    }
-    // mask
-    else if (mpe_unlikely(eff == MPE_EFFECT(mpe_frame_mask))) {
-      mpe_frame_mask_t* mf = (mpe_frame_mask_t*)f;
-      if (mpe_unlikely(mf->mask == opeff && mf->from <= mask_level)) {
-        mask_level++;
-      }
-    }
-    f = f->parent;
-  }
-  return NULL;
-}
+// static mpe_frame_handle_t* mpe_find(mpe_optag_t optag) {
+//   mpe_frame_t* f = mpe_frame_top;
+//   mpe_effect_t opeff = optag->effect;
+//   size_t mask_level = 0;
+//   while (mpe_likely(f != NULL)) {
+//     mpe_effect_t eff = f->effect;
+//     // handle
+//     if (mpe_likely(eff == opeff)) {
+//       if (mpe_likely(mask_level == 0)) {
+//         return (mpe_frame_handle_t*)f;    // found our handler
+//       }
+//       else {
+//         mask_level--;
+//       }
+//     }
+//     // under
+//     else if (mpe_unlikely(eff == MPE_EFFECT(mpe_frame_under))) {
+//       mpe_effect_t ueff = ((mpe_frame_under_t*)f)->under;
+//       do {
+//         f = f->parent;
+//       } while (f != NULL && f->effect != ueff);
+//       if (f == NULL) break;
+//     }
+//     // mask
+//     else if (mpe_unlikely(eff == MPE_EFFECT(mpe_frame_mask))) {
+//       mpe_frame_mask_t* mf = (mpe_frame_mask_t*)f;
+//       if (mpe_unlikely(mf->mask == opeff && mf->from <= mask_level)) {
+//         mask_level++;
+//       }
+//     }
+//     f = f->parent;
+//   }
+//   return NULL;
+// }
 
 void* mpe_perform(mpe_frame_handle_t* h, mpe_optag_t optag, void* arg) {
   // mpe_frame_handle_t* h = mpe_find(optag);
@@ -386,10 +386,10 @@ static mpe_decl_noinline void* mpe_handle_start(mp_prompt_t* prompt, void* earg)
   try {  // catch unwind exceptions
   #endif
     // push frame on top
-    {mpe_with_frame(&h.frame) {
+    // {mpe_with_frame(&h.frame) {
       // and call the action
       result = (env->body)(&h, env->arg);
-    }}
+    // }}
     // potentially run return function
     if (h.hdef->resultfun != NULL) {
       result = h.hdef->resultfun(h.local, result);

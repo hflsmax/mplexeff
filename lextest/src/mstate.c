@@ -136,11 +136,11 @@ static void test(long count) {
 
 
 void mstate_run(void) {
-#ifdef NDEBUG
+// #ifdef NDEBUG
   test(1000L);
   // test(10100100L);  // only if the compiler does tail-call optimization
-#else
-  test(100L);
-#endif
+// #else
+//   test(100L);
+// #endif
 }
 

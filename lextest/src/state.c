@@ -64,11 +64,11 @@ static void test(int init) {
   printf("state: %d\n", res);
 }
 void state_run(void) {
-#ifdef NDEBUG
+// #ifdef NDEBUG
   test(10100100L);
-#else
-  test(100);
-#endif
+// #else
+//   test(100);
+// #endif
 }
 
 /*

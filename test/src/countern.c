@@ -81,10 +81,10 @@ static void test(long count) {
 }
 
 void countern_run(void) {
-  #ifdef NDEBUG
+  // #ifdef NDEBUG
   test(10010010L);
-  #else
-  test(100100L);
-  #endif
+  // #else
+  // test(100100L);
+  // #endif
 }
 

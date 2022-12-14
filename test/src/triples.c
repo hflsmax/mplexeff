@@ -116,9 +116,9 @@ static void test(int n, int s, long expect) {
 
 
 void triples_run(void) {
-#ifdef NDEBUG
+// #ifdef NDEBUG
   test(500,127,1281);
-#else
-  test(100, 27, 48);
-#endif
+// #else
+//   test(100, 27, 48);
+// #endif
 }

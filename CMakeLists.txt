@@ -7,7 +7,7 @@ project(libmprompt C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 14)
 
-option(MP_USE_C             "Build C versions of the library without exception support" OFF)
+option(MP_USE_C             "Build C versions of the library without exception support" ON)
 option(MP_DEBUG_UBSAN       "Build with undefined behaviour sanitizer" OFF)
 option(MP_DEBUG_ASAN        "Build with address sanitizer" OFF)
 
@@ -19,6 +19,9 @@ set(mprompt_sources  src/mprompt/main.c)
 
 set(mpeff_sources    src/mpeff/main.c
     src/mpeff/mpeff.c)
+
+set(mplexeff_sources    src/mplexeff/main.c
+    src/mplexeff/mpeff.c)
 
 set(test_mpe_main_sources
     test/common_util.c
@@ -34,6 +37,21 @@ set(test_mpe_main_sources
     # test/src/rehandle.c
     test/src/triples.c
     test/test_mpe_main.c)    
+
+set(lextest_mpe_main_sources
+    lextest/common_util.c
+    lextest/common_effects.c
+    lextest/src/reader.c
+    # lextest/src/multi_invo.c
+    lextest/src/counter.c
+    lextest/src/countern.c
+    lextest/src/mstate.c
+    lextest/src/amb.c
+    lextest/src/amb_state.c
+    lextest/src/nqueens.c
+    # lextest/src/rehandle.c
+    lextest/src/triples.c
+    lextest/test_mpe_main.c)   
 
 if (NOT MP_USE_C)
 list(APPEND test_mpe_main_sources
@@ -71,6 +89,7 @@ if (MP_USE_C)
   message(STATUS "Use the C compiler to compile (MP_USE_C=ON)")  
   set(mp_mprompt_name "mprompt")
   set(mp_mpeff_name   "mpeff") 
+  set(mp_mplexeff_name   "mplexeff") 
 
   if(CMAKE_C_COMPILER_ID MATCHES "MSVC|Intel")
     message(WARNING "It is not recommended to use plain C with this compiler (due to SEH) (${CMAKE_C_COMPILER_ID})")
@@ -237,24 +256,50 @@ if (NOT WIN32)
   target_link_libraries(mpeff PUBLIC ${mp_libs})
 endif()
 
+# mplexeff library
+add_library(mplexeff STATIC ${mplexeff_sources} ${mprompt_asm_source})
+set_target_properties(mplexeff PROPERTIES VERSION ${mp_version} OUTPUT_NAME ${mp_mplexeff_name} )
+target_compile_definitions(mplexeff PRIVATE MPE_STATIC_LIB)
+target_compile_options(mplexeff PRIVATE ${mp_cflags})
+target_include_directories(mplexeff PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${mp_install_dir}/include>
+)
+if (NOT WIN32)
+  target_link_libraries(mplexeff PUBLIC ${mp_libs})
+endif()
+
+
 
 
 #---------------------------------------------------------------
 # tests
 #---------------------------------------------------------------
 add_executable(test_mpe_main              ${test_mpe_main_sources})
-add_executable(test_mp_async              ${test_mp_async_sources})
-add_executable(test_mp_example_generator  ${test_mp_example_generator_sources})
-add_executable(test_mp_example_async      ${test_mp_example_async_sources})
+add_executable(lextest_mpe_main              ${lextest_mpe_main_sources})
+# add_executable(test_mp_async              ${test_mp_async_sources})
+# add_executable(test_mp_example_generator  ${test_mp_example_generator_sources})
+# add_executable(test_mp_example_async      ${test_mp_example_async_sources})
 
-set(test_targets test_mpe_main test_mp_async test_mp_example_generator test_mp_example_async)
-
-
-# finalize tests
 enable_testing()
-foreach(test_target ${test_targets} )
-  target_compile_options(${test_target} PRIVATE ${mp_cflags})
-  target_include_directories(${test_target} PRIVATE include test)
-  target_link_libraries(${test_target} PRIVATE mpeff)
-  add_test( ${test_target} ${test_target})
-endforeach()
+target_compile_options(test_mpe_main PRIVATE ${mp_cflags})
+target_include_directories(test_mpe_main PRIVATE include test)
+target_link_libraries(test_mpe_main PRIVATE mpeff)
+add_test( test_mpe_main test_mpe_main)
+
+target_compile_options(lextest_mpe_main PRIVATE ${mp_cflags})
+target_include_directories(lextest_mpe_main PRIVATE include lextest)
+target_link_libraries(lextest_mpe_main PRIVATE mplexeff)
+add_test( lextest_mpe_main lextest_mpe_main)
+
+# set(test_targets test_mpe_main lextest_mpe_main)
+
+
+# # finalize tests
+# enable_testing()
+# foreach(test_target ${test_targets} )
+#   target_compile_options(${test_target} PRIVATE ${mp_cflags})
+#   target_include_directories(${test_target} PRIVATE include test)
+#   target_link_libraries(${test_target} PRIVATE mpeff)
+#   add_test( ${test_target} ${test_target})
+# endforeach()

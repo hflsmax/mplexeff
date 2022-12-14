@@ -52,10 +52,10 @@ static void test(int n, int expect) {
 
 
 void nqueens_run(void) {
-// #ifdef NDEBUG
+#ifdef NDEBUG
   test(12, 14200);
-// #else
-//   test(8, 92);
-// #endif
+#else
+  test(8, 92);
+#endif
 }
 

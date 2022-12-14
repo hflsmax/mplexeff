@@ -12,6 +12,36 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <mprompt.h>
+
+/// Effect values.
+/// Operations are identified by a constant string pointer.
+/// They are compared by address though so they must be declared as static constants (using #MPE_NEWOPTAG)
+typedef const char* const* mpe_effect_t;
+
+
+// A general frame
+typedef struct mpe_frame_s {
+  mpe_effect_t        effect;     // every frame has an effect (to speed up tests)
+  struct mpe_frame_s* parent;
+} mpe_frame_t;
+
+
+// An under frame (used for tail-resumptive optimization)
+typedef struct mpe_frame_under_s {
+  mpe_frame_t   frame;    
+  mpe_effect_t  under;    // ignore frames until the innermost `under` effect
+} mpe_frame_under_t;
+
+
+// An mask frame 
+typedef struct mpe_frame_mask_s {
+  mpe_frame_t   frame;
+  mpe_effect_t  mask;    
+  size_t        from;
+} mpe_frame_mask_t;
+
+
 //------------------------------------------------------
 // Compiler specific attributes
 //------------------------------------------------------
@@ -39,8 +69,6 @@
 /// These are the primitives to define effect handlers and yield operations
 /// \{
 
-/// A generic action 
-typedef void* (mpe_actionfun_t)(void* arg);
 
 /// A `lh_resultfun` is called when a handled action is done.
 typedef void* (mpe_resultfun_t)(void* local, void* arg);
@@ -53,11 +81,6 @@ typedef void (mpe_releasefun_t)(void* local);
 /// This is first-class, and can be stored in data structures etc, and can survive
 /// the scope of an operation function. It can be resumed through mpe_resume() or mpe_release_resume().
 typedef struct mpe_resume_s mpe_resume_t;
-
-/// Effect values.
-/// Operations are identified by a constant string pointer.
-/// They are compared by address though so they must be declared as static constants (using #MPE_NEWOPTAG)
-typedef const char* const* mpe_effect_t;
 
 /// Operation values.
 /// An operation is identified by an effect and index in that effect. 
@@ -105,6 +128,25 @@ typedef struct mpe_handlerdef_s {
                                     ///< Note: all operations must be in the same order here as in the effect definition! (since each operation has a fixed index).
 } mpe_handlerdef_t;
 
+// A handler frame
+typedef struct mpe_frame_handle_s {
+  mpe_frame_t             frame;
+  mp_prompt_t*            prompt;
+  const mpe_handlerdef_t* hdef;
+  void*                   local;
+  // mpe_frame_t*            resume_top;
+} mpe_frame_handle_t;
+
+// Finally frame
+typedef struct mpe_frame_finally_s {
+  mpe_frame_t       frame;
+  mpe_releasefun_t* fun;
+  void*             local;
+} mpe_frame_finally_t;
+
+
+/// A generic action 
+typedef void* (mpe_actionfun_t)( mpe_frame_handle_t* h, void* arg);
 
 
 /*-----------------------------------------------------------------
@@ -112,7 +154,7 @@ typedef struct mpe_handlerdef_s {
 -----------------------------------------------------------------*/
 
 mpe_decl_export void* mpe_handle(const mpe_handlerdef_t* hdef, void* local, mpe_actionfun_t* body, void* arg);
-mpe_decl_export void* mpe_perform(mpe_optag_t optag, void* arg);
+mpe_decl_export void* mpe_perform(mpe_frame_handle_t* h, mpe_optag_t optag, void* arg);
 
 mpe_decl_export void* mpe_resume(mpe_resume_t* resume, void* local, void* arg);
 mpe_decl_export void* mpe_resume_final(mpe_resume_t* resume, void* local, void* arg);  // final resumption
@@ -168,19 +210,19 @@ extern const struct mpe_optag_s MPE_OPTAG_DEF(effect,op);
 
 #define MPE_DECLARE_OP0(effect,op,restype) \
 MPE_DECLARE_OP(effect,op) \
-restype effect##_##op();
+restype effect##_##op(mpe_frame_handle_t* h);
 
 #define MPE_DECLARE_OP1(effect,op,restype,argtype) \
 MPE_DECLARE_OP(effect,op) \
-restype effect##_##op(argtype arg);
+restype effect##_##op(mpe_frame_handle_t* h, argtype arg);
 
 #define MPE_DECLARE_VOIDOP0(effect,op) \
 MPE_DECLARE_OP(effect,op) \
-void effect##_##op();
+void effect##_##op(mpe_frame_handle_t* h);
 
 #define MPE_DECLARE_VOIDOP1(effect,op,argtype) \
 MPE_DECLARE_OP(effect,op) \
-void effect##_##op(argtype arg);
+void effect##_##op(mpe_frame_handle_t* h, argtype arg);
 
 
 #define MPE_DEFINE_EFFECT0(effect) \
@@ -237,16 +279,16 @@ const struct mpe_optag_s MPE_OPTAG_DEF(effect,op7) = { MPE_EFFECT(effect), 6 };
 
 
 #define MPE_DEFINE_OP0(effect,op,restype) \
-  restype effect##_##op() { void* res = mpe_perform(MPE_OPTAG(effect,op), NULL); return mpe_##restype##_voidp(res); }
+  restype effect##_##op(mpe_frame_handle_t* h) { void* res = mpe_perform(h, MPE_OPTAG(effect,op), NULL); return mpe_##restype##_voidp(res); }
 
 #define MPE_DEFINE_OP1(effect,op,restype,argtype) \
-  restype effect##_##op(argtype arg) { void* res = mpe_perform(MPE_OPTAG(effect,op), mpe_voidp_##argtype(arg)); return mpe_##restype##_voidp(res); }
+  restype effect##_##op(mpe_frame_handle_t* h, argtype arg) { void* res = mpe_perform(h, MPE_OPTAG(effect,op), mpe_voidp_##argtype(arg)); return mpe_##restype##_voidp(res); }
 
 #define MPE_DEFINE_VOIDOP0(effect,op) \
-  void effect##_##op() { mpe_perform(MPE_OPTAG(effect,op), NULL); }
+  void effect##_##op(mpe_frame_handle_t* h) { mpe_perform(h, MPE_OPTAG(effect,op), NULL); }
 
 #define MPE_DEFINE_VOIDOP1(effect,op,argtype) \
-  void effect##_##op(argtype arg) { mpe_perform(MPE_OPTAG(effect,op), mpe_voidp_##argtype(arg)); }
+  void effect##_##op(mpe_frame_handle_t* h, argtype arg) { mpe_perform(h, MPE_OPTAG(effect,op), mpe_voidp_##argtype(arg)); }
 
 #define MPE_WRAP_FUN0(fun,restype) \
   void* wrap_##fun(void* arg) { (void)(arg); return mpe_voidp_##restype(fun()); }

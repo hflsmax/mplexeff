@@ -46,7 +46,7 @@ static void test_c(void) {
   counter_run();
   countern_run();
   mstate_run();
-  rehandle_run();
+  // rehandle_run();
 
   // multi-shot tests
   amb_run();

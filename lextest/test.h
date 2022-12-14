@@ -37,6 +37,7 @@ void triples_run(void);
 void amb_run(void);
 void amb_state_run(void);
 void rehandle_run(void);
+void multi_invo_run(void);
 
 
 #ifdef __cplusplus
@@ -73,6 +74,13 @@ public:
 /*-----------------------------------------------------------------
   Standard effects
 -----------------------------------------------------------------*/
+
+// Multi Invo
+MPE_DECLARE_EFFECT1(multi_invo, ask)
+MPE_DECLARE_OP0(multi_invo, ask, long)
+
+void* multi_invo_handle(mpe_actionfun_t* action, long init, void* arg);
+
 
 // Reader
 MPE_DECLARE_EFFECT1(reader, ask)

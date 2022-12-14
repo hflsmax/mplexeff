@@ -16,22 +16,22 @@ static bool safe( int queen, blist xs ) {
   return true;
 }
 
-static blist find_solution( int n, int col ) {
+static blist find_solution( mpe_frame_handle_t* h, int n, int col ) {
   if (col == 0) return NULL;
-  blist sol = find_solution( n, col - 1);
-  int queen = choice_choose( n );
+  blist sol = find_solution( h, n, col - 1);
+  int queen = choice_choose( h, n );
   if (safe(queen,sol)) {
     return blist_cons(mpe_voidp_int(queen),sol);
   }
   else {
-    choice_fail();
+    choice_fail( h );
     return NULL; 
   }
 }
 
-static void* bench_nqueens(void* arg) {
+static void* bench_nqueens( mpe_frame_handle_t* h, void* arg) {
   int n = mpe_int_voidp(arg);
-  return mpe_voidp_blist( find_solution(n,n) );
+  return mpe_voidp_blist( find_solution(h,n,n) );
 }
 
 
@@ -52,10 +52,10 @@ static void test(int n, int expect) {
 
 
 void nqueens_run(void) {
-#ifdef NDEBUG
+// #ifdef NDEBUG
   test(12, 14200);
-#else
-  test(8, 92);
-#endif
+// #else
+//   test(8, 92);
+// #endif
 }
 

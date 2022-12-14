@@ -12,13 +12,13 @@
   Benchmark
 -----------------------------------------------------------------*/
 
-static void* bench_counter(void* arg) {
+static void* bench_counter(mpe_frame_handle_t* h, void* arg) {
   UNUSED(arg);
   long count = 0;
   long i;
-  while ((i = state_get()) > 0) {
+  while ((i = state_get(h)) > 0) {
     //trace_printf("counter: %i\n", i);
-    state_set(i-1);
+    state_set(h, i-1);
     count++;
   }
   return mpe_voidp_long(count);

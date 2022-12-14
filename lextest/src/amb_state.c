@@ -15,19 +15,35 @@
   Benchmark
 -----------------------------------------------------------------*/
 
-static bool xxor(void) {
-  bool x = amb_flip();
-  bool y = amb_flip();
+typedef struct amb_state_handlers_s {
+  mpe_frame_handle_t* state_handler;
+  mpe_frame_handle_t* amb_handler;
+} amb_state_handlers_t;
+
+static bool xxor(mpe_frame_handle_t* h_a) {
+  bool x = amb_flip(h_a);
+  bool y = amb_flip(h_a);
   return ((x && !y) || (!x && y));
 }
 
 
-static void* foo(void* arg) {
-  UNUSED(arg);
-  bool p = amb_flip();
-  long i = state_get();
-  state_set(i + 1);
-  bool b = ((i > 0 && p) ? xxor() : false);
+static void* foo(mpe_frame_handle_t* h, void* arg) {
+  mpe_frame_handle_t* h_a;
+  mpe_frame_handle_t* h_s;
+
+  amb_state_handlers_t *handlers = (amb_state_handlers_t*)(arg);
+
+  if (h->frame.effect == MPE_EFFECT(state)) {
+    h_s = h;
+    h_a = handlers->amb_handler;
+  } else {
+    h_s = handlers->state_handler;
+    h_a = h;
+  }
+  bool p = amb_flip(h_a);
+  long i = state_get(h_s);
+  state_set(h_s, i + 1);
+  bool b = ((i > 0 && p) ? xxor(h_a) : false);
   return mpe_voidp_bool(b);
 }
 
@@ -40,16 +56,20 @@ static void print_bool(void* arg) {
   mpt_printf("%s", mpe_bool_voidp(arg) ? "true" : "false" );
 }
 
-static void* hstate( void* arg ) {
-  return state_handle( &foo, 0, arg );
+static void* hstate( mpe_frame_handle_t* h_a, void* arg ) {
+  amb_state_handlers_t handlers_;
+  handlers_.amb_handler = h_a;
+  return state_handle( &foo, 0, &handlers_ );
 }
 
 static blist amb_state(void) {
   return amb_handle( &hstate, NULL );
 }
 
-static void* hamb(void* arg) {
-  return amb_handle(&foo, arg);
+static void* hamb( mpe_frame_handle_t* h_s, void* arg) {
+  amb_state_handlers_t handlers_;
+  handlers_.state_handler = h_s;
+  return amb_handle(&foo, &handlers_);
 }
 
 static blist state_amb(void) {

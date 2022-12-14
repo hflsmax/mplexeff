@@ -19,19 +19,26 @@ MPE_DEFINE_VOIDOP1(yield, yield, long)
   Benchmark
 -----------------------------------------------------------------*/
 
-static void triples( long n, long s ) {
-  long x = choice_choose(n);
-  long y = choice_choose(x-1);
-  long z = choice_choose(y-1);
-  if (x+y+z == s) yield_yield(x);
-             else choice_fail();
+typedef struct triples_args_s {
+  mpe_frame_handle_t* yield_handler;
+  mpe_frame_handle_t* choice_handler;
+  long l;
+} triples_args_t;
+
+static void triples( long n, long s, mpe_frame_handle_t* h_y, mpe_frame_handle_t* h_c) {
+  long x = choice_choose(h_c, n);
+  long y = choice_choose(h_c, x-1);
+  long z = choice_choose(h_c, y-1);
+  if (x+y+z == s) yield_yield(h_y, x);
+             else choice_fail(h_c);
 }
 
-static void* do_triples(void* arg) {
-  long l = mpe_long_voidp(arg);
+static void* do_triples(mpe_frame_handle_t* h_c, void* arg) {
+  triples_args_t* args = (triples_args_t*)arg;
+  long l = args->l;
   long n = (l >> 16);
   long s = (l & 0xFFFF);
-  triples(n,s);
+  triples(n,s, args->yield_handler, h_c);
   return mpe_voidp_int(0);
 }
 
@@ -70,7 +77,7 @@ static const mpe_handlerdef_t choice_def = { MPE_EFFECT(choice), &_choice_result
   { MPE_OP_NULL, mpe_op_null, NULL }
 } };
 
-static void* xchoice_handle(void*(*action)(void*), void* arg) {
+static void* xchoice_handle(void*(*action)(mpe_frame_handle_t *h_c, void*), void* arg) {
   return mpe_handle(&choice_def, mpe_voidp_null, action, arg);
 }
 
@@ -93,7 +100,7 @@ static const mpe_handlerdef_t yield_def = { MPE_EFFECT(yield),  &_yield_result, 
   { MPE_OP_NULL, mpe_op_null, NULL }
 } };
 
-static void* yield_handle(void*(*action)(void*), long val, void* arg) {
+static void* yield_handle(void*(*action)(mpe_frame_handle_t *h_y, void*), long val, void* arg) {
   return mpe_handle(&yield_def, mpe_voidp_long(val), action, arg);
 }
 
@@ -101,8 +108,9 @@ static void* yield_handle(void*(*action)(void*), long val, void* arg) {
  bench
 -----------------------------------------------------------------*/
 
-static void* do_choose_triples( void* arg ) {
-  return xchoice_handle( &do_triples, arg );
+static void* do_choose_triples( mpe_frame_handle_t* h_y, void* arg ) {
+  triples_args_t args = { h_y, NULL, (long)arg };
+  return xchoice_handle( &do_triples, &args );
 }
 
 static void test(int n, int s, long expect) {

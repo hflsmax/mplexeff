@@ -33,27 +33,29 @@ int main(int argc, char** argv) {
   mpt_timer_t start = mpt_show_process_info_start(&start_rss);
   
   test_c();
-  test_cpp();
-  test_cpp_threaded();
+  // test_cpp();
+  // test_cpp_threaded();
   
   mpt_printf("done.\n");
   mpt_show_process_info(stderr, start, start_rss);
 }
 
 static void test_c(void) {
-  // effect handlers
+  // // effect handlers
   reader_run();
   counter_run();
   countern_run();
   mstate_run();
-  rehandle_run();
+  // rehandle_run();
 
-  // multi-shot tests
+  // // multi-shot tests
   amb_run();
   amb_state_run();
 
   nqueens_run();
   triples_run();
+
+  // multi_invo_run();
 }
 
 

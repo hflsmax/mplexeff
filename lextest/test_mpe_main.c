@@ -54,8 +54,6 @@ static void test_c(void) {
 
   nqueens_run();
   triples_run();
-
-  // multi_invo_run();
 }
 
 

@@ -24,6 +24,12 @@ static void* bench_counter(mpe_frame_handle_t* h, void* arg) {
   return mpe_voidp_long(count);
 }
 
+static long multi_install(long arg) {
+  for (int i = 0; i < mpe_long_voidp(arg); i++) {
+    state_handle(&bench_counter, 1, NULL);
+  }
+}
+
 
 /*-----------------------------------------------------------------
   Run
@@ -45,6 +51,9 @@ static void test(long count) {
   mpt_bench{ res = mpe_long_voidp(gstate_handle(&bench_counter, count/10, NULL)); }  
   mpt_printf("gcounter  : %ld\n", res);
   mpt_assert(res == count/10, "gcounter");
+
+  mpt_bench{ res = multi_install(count); }
+  mpt_printf("multi_install_counter   : %ld\n", res);
 }
 
 

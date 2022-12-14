@@ -90,6 +90,7 @@ if (MP_USE_C)
   set(mp_mprompt_name "mprompt")
   set(mp_mpeff_name   "mpeff") 
   set(mp_mplexeff_name   "mplexeff") 
+  set(mp_mplexopteff_name   "mplexopteff") 
 
   if(CMAKE_C_COMPILER_ID MATCHES "MSVC|Intel")
     message(WARNING "It is not recommended to use plain C with this compiler (due to SEH) (${CMAKE_C_COMPILER_ID})")
@@ -269,6 +270,20 @@ if (NOT WIN32)
   target_link_libraries(mplexeff PUBLIC ${mp_libs})
 endif()
 
+# mplexopteff library
+add_library(mplexopteff STATIC ${mplexeff_sources} ${mprompt_asm_source})
+set_target_properties(mplexopteff PROPERTIES VERSION ${mp_version} OUTPUT_NAME ${mp_mplexopteff_name} )
+target_compile_definitions(mplexopteff PRIVATE MPE_STATIC_LIB)
+target_compile_options(mplexopteff PRIVATE ${mp_cflags})
+target_include_directories(mplexopteff PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${mp_install_dir}/include>
+)
+if (NOT WIN32)
+  target_link_libraries(mplexopteff PUBLIC ${mp_libs})
+endif()
+
+
 
 
 
@@ -293,10 +308,11 @@ target_include_directories(lextest_mpe_main PRIVATE include lextest)
 target_link_libraries(lextest_mpe_main PRIVATE mplexeff)
 add_test( lextest_mpe_main lextest_mpe_main)
 
-list(APPEND mp_cflags -DPROMPT_OPT)
+
+target_compile_definitions(mplexopteff PRIVATE PROMPT_OPT)
 target_compile_options(lexopttest_mpe_main PRIVATE ${mp_cflags})
 target_include_directories(lexopttest_mpe_main PRIVATE include lextest)
-target_link_libraries(lexopttest_mpe_main PRIVATE mplexeff)
+target_link_libraries(lexopttest_mpe_main PRIVATE mplexopteff)
 add_test( lexopttest_mpe_main lexopttest_mpe_main)
 
 # set(test_targets test_mpe_main lextest_mpe_main)

@@ -412,12 +412,19 @@ static mpe_decl_noinline void* mpe_handle_start(mp_prompt_t* prompt, void* earg)
 /// Handles operations yielded in `body(arg)` with the given handler definition `def`.
 void* mpe_handle(const mpe_handlerdef_t* hdef, void* local, mpe_actionfun_t* body, void* arg) {
   bool need_prompt = false;
+  #ifdef PROMPT_OPT
   for (size_t i = 0; i < 8 && hdef->operations[i].opkind != MPE_OP_NULL ; i++) {
-    if (hdef->operations[i].opkind != MPE_OP_TAIL_NOOP) {
+    if (hdef->operations[i].opkind != MPE_OP_ABORT &&
+        hdef->operations[i].opkind != MPE_OP_NEVER &&
+        hdef->operations[i].opkind != MPE_OP_TAIL_NOOP &&
+        hdef->operations[i].opkind != MPE_OP_TAIL) {
       need_prompt = true;
       break;
     }
   }
+  #else
+  need_prompt = true;
+  #endif
   if (need_prompt) {
     struct mpe_handle_start_env env = { hdef, local, body, arg };
     return mp_prompt(&mpe_handle_start, &env);

@@ -208,7 +208,7 @@ endif()
 # -----------------------------------------------------------------------------
 
 message(STATUS "")
-message(STATUS   "Libraries : lib${mp_mprompt_name}, lib${mp_mpeff_name}")
+message(STATUS   "Libraries : lib${mp_mprompt_name}, lib${mp_mpeff_name}, lib${mp_mplexeff_name}")
 message(STATUS   "Build type: ${CMAKE_BUILD_TYPE}")
 if(MP_USE_C)
   message(STATUS "Compiler  : ${CMAKE_C_COMPILER}")
@@ -277,6 +277,7 @@ endif()
 #---------------------------------------------------------------
 add_executable(test_mpe_main              ${test_mpe_main_sources})
 add_executable(lextest_mpe_main              ${lextest_mpe_main_sources})
+add_executable(lexopttest_mpe_main              ${lextest_mpe_main_sources})
 # add_executable(test_mp_async              ${test_mp_async_sources})
 # add_executable(test_mp_example_generator  ${test_mp_example_generator_sources})
 # add_executable(test_mp_example_async      ${test_mp_example_async_sources})
@@ -291,6 +292,12 @@ target_compile_options(lextest_mpe_main PRIVATE ${mp_cflags})
 target_include_directories(lextest_mpe_main PRIVATE include lextest)
 target_link_libraries(lextest_mpe_main PRIVATE mplexeff)
 add_test( lextest_mpe_main lextest_mpe_main)
+
+list(APPEND mp_cflags -DPROMPT_OPT)
+target_compile_options(lexopttest_mpe_main PRIVATE ${mp_cflags})
+target_include_directories(lexopttest_mpe_main PRIVATE include lextest)
+target_link_libraries(lexopttest_mpe_main PRIVATE mplexeff)
+add_test( lexopttest_mpe_main lexopttest_mpe_main)
 
 # set(test_targets test_mpe_main lextest_mpe_main)
 

@@ -20,9 +20,9 @@ void* choose(mp_resume_t* r, void* n) {
 
 void* count_triples(mp_prompt_t* p, void* _main) {
     struct main *main = (struct main*)_main;
-    int r1 = (int)mp_yield(p, choose, (int)main->n);
-    int r2 = (int)mp_yield(p, choose, r1-1);
-    int r3 = (int)mp_yield(p, choose, r2-1);
+    int r1 = (int)mp_yield(p, choose, (void*)main->n);
+    int r2 = (int)mp_yield(p, choose, (void*)r1-1);
+    int r3 = (int)mp_yield(p, choose, (void*)r2-1);
     if (r1 + r2 + r3 == main->s)
         *(main->cnt) += 1;
 }
